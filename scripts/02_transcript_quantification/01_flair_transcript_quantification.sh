@@ -18,7 +18,7 @@
 #
 # Dependencies: FLAIR, samtools, python
 #
-# Reference: Tang et al. (2020) FLAIR: Full-Length Alternative Isoform 
+# Reference: Tang et al. (2020) FLAIR: Full-Length Alternative Isoform
 #            analysis of RNA. Nature Communications.
 ################################################################################
 
@@ -35,6 +35,7 @@ conda activate flair
 ################################################################################
 # STEP 1: INDEX BAM FILES
 ################################################################################
+# Bam file from aligment using minimap2 from 01_longread_alignment_gene_quant.sh
 # Ensure all BAM files are indexed (required for FLAIR)
 
 echo "Indexing BAM files..."
@@ -61,9 +62,9 @@ mkdir -p 01_bed12
 for bam_file in /path/to/bam/*.bam; do
   if [[ -f "$bam_file" ]]; then
     sample_name=$(basename "$bam_file" .bam)
-    
+
     echo "  Processing: $sample_name"
-    
+
     python /path/to/flair/bin/bam2Bed12.py \
       -i "$bam_file" \
       > 01_bed12/${sample_name}.bed12
@@ -80,6 +81,7 @@ echo "BED12 conversion complete"
 #   - Adjusts splice sites to match known junctions in GTF
 #   - Filters out reads with low-quality alignments
 #   - Generates corrected BED12 files for each sample
+#   -t parameter is setting the number of threads
 
 echo "Correcting read alignments..."
 
@@ -88,16 +90,16 @@ mkdir -p 02_corrected
 for bed_file in 01_bed12/*.bed12; do
   if [[ -f "$bed_file" ]]; then
     sample_name=$(basename "$bed_file" .bed12)
-    
+
     echo "  Correcting: $sample_name"
-    
+
     python /path/to/flair/bin/flair.py correct \
       -q "$bed_file" \
       -g /path/to/reference/hg19.fa \
       -f /path/to/annotation/gencode.v46lift37.annotation.gtf \
       -t 10 \
       -o 02_corrected/${sample_name}
-    
+
     # Output will be: ${sample_name}_all_corrected.bed
   fi
 done
@@ -123,7 +125,7 @@ echo "Total corrected reads: $total_reads"
 ################################################################################
 # STEP 5: SPLIT CONCATENATED FILE BY CHROMOSOME
 ################################################################################
-# Split by chromosome to enable parallel processing of collapse step
+# Split by chromosome to enable parallel processing of collapse step (memeory intensive)
 # Processing by chromosome reduces memory requirements
 
 echo "Splitting by chromosome..."
@@ -135,11 +137,11 @@ chromosomes=(chr{1..22} chrX chrY chrM)
 
 for chr in "${chromosomes[@]}"; do
   echo "  Extracting: $chr"
-  
+
   # Extract reads from this chromosome (match whole word to avoid chr1 matching chr10)
   grep -w "^${chr}" 03_concatenated/all_samples_corrected.bed \
     > 03_concatenated/by_chromosome/all_samples_corrected.${chr}.bed
-  
+
   # Count reads for this chromosome
   chr_reads=$(wc -l < 03_concatenated/by_chromosome/all_samples_corrected.${chr}.bed)
   echo "    Reads on $chr: $chr_reads"
@@ -177,12 +179,12 @@ mkdir -p 04_collapse
 # Process each chromosome separately
 for bed_file in 03_concatenated/by_chromosome/all_samples_corrected.*.bed; do
   if [[ -f "$bed_file" ]]; then
-    
+
     # Extract chromosome name from filename
     chr_name=$(basename "$bed_file" | sed 's/all_samples_corrected\.//' | sed 's/\.bed$//')
-    
+
     echo "  Collapsing chromosome: $chr_name"
-    
+
     python /path/to/flair/bin/flair.py collapse \
       -g /path/to/reference/hg19.fa \
       -r 04_collapse/all_samples_concatenated.fastq.gz \
@@ -193,12 +195,12 @@ for bed_file in 03_concatenated/by_chromosome/all_samples_corrected.*.bed; do
       --keep_intermediate \
       --temp_dir 04_collapse/temp_${chr_name} \
       -o 04_collapse/${chr_name}
-    
+
     # Output files:
     #   ${chr_name}.isoforms.fa     - Isoform sequences (FASTA)
     #   ${chr_name}.isoforms.bed    - Isoform coordinates (BED12)
     #   ${chr_name}.isoforms.gtf    - Isoform annotation (GTF)
-    
+
   fi
 done
 
@@ -251,22 +253,22 @@ mkdir -p 05_quantify
 # Quantify each chromosome separately
 for fasta_file in 04_collapse/*.isoforms.fa; do
   if [[ -f "$fasta_file" ]]; then
-    
+
     # Extract chromosome name from filename
     chr_name=$(basename "$fasta_file" .isoforms.fa)
-    
+
     echo "  Quantifying chromosome: $chr_name"
-    
+
     python /path/to/flair/bin/flair.py quantify \
       -r 05_quantify/samples_manifest.tsv \
       -i "$fasta_file" \
       --tpm \
       --temp_dir 05_quantify/temp_${chr_name} \
       -o 05_quantify/${chr_name}
-    
+
     # Output file:
     #   ${chr_name}.counts.tsv - Raw counts and TPM values per sample
-    
+
   fi
 done
 
@@ -291,7 +293,7 @@ head -n 1 05_quantify/chr1.counts.tsv > 05_quantify/all_chromosomes_counts.tsv
 
 for counts_file in 05_quantify/*.counts.tsv; do
   chr_name=$(basename "$counts_file" .counts.tsv)
-  
+
   # Skip if this is chr1 (already added with header) or the merged file
   if [[ "$chr_name" != "chr1" ]] && [[ "$chr_name" != "all_chromosomes_counts" ]]; then
     tail -n +2 "$counts_file" >> 05_quantify/all_chromosomes_counts.tsv
