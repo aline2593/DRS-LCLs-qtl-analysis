@@ -2,7 +2,6 @@
 # Direct long-read RNA sequencing uncovers functional variation affecting transcript production and RNA modifications.
 
 [![DOI](https://img.shields.io/badge/DOI-10.5281%2Fzenodo.1234567-blue.svg)](https://doi.org/10.5281/zenodo.12555794)
-
 [![License](https://img.shields.io/badge/License-MIT-green.svg)](LICENSE)
 [![Platform](https://img.shields.io/badge/Platform-Linux-lightgrey.svg)](https://www.linux.org/)
 
