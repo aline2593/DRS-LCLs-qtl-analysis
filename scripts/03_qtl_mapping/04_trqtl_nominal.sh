@@ -1,8 +1,8 @@
 #!/usr/bin/env bash
 ################################################################################
-# tQTL Nominal Pass
+# trQTL Nominal Pass
 ################################################################################
-# Description: Run nominal (all-variant) tQTL analysis to get complete
+# Description: Run nominal (all-variant) trQTL analysis to get complete
 #              association statistics for all tested transcript-SNP pairs.
 #
 # Purpose:
@@ -29,8 +29,8 @@ set -euo pipefail
 TRANSCRIPT_BED="/path/to/transcripts_filtered50.bed.gz"
 GENOTYPES="/path/to/genotypes.bcf"
 OPTIMAL_PCS=0  # UPDATE: Use optimal from permutation step
-COV_FILE="/path/to/tqtl/output/pc_optimization/covariates_${OPTIMAL_PCS}PC.txt"
-OUTPUT_DIR="/path/to/tqtl/output/nominal"
+COV_FILE="/path/to/trQTL/output/pc_optimization/covariates_${OPTIMAL_PCS}PC.txt"
+OUTPUT_DIR="/path/to/trQTL/output/nominal"
 
 # QTLtools parameters
 CHUNK_SIZE=20
@@ -48,7 +48,7 @@ mkdir -p "$OUTPUT_DIR/logs"
 mkdir -p "$OUTPUT_DIR/chunks"
 
 echo "=========================================="
-echo "tQTL Nominal Pass"
+echo "trQTL Nominal Pass"
 echo "=========================================="
 echo ""
 echo "Transcript Expression: $TRANSCRIPT_BED"
@@ -94,10 +94,10 @@ echo "This is larger than eQTL due to more transcripts than genes"
 echo ""
 
 for chunk in $(seq 1 $CHUNK_SIZE); do
-    
-    job_name="tQTL_nominal_${OPTIMAL_PCS}PC_chunk${chunk}"
-    out_file="${OUTPUT_DIR}/chunks/tQTL_nominal_${chunk}_${CHUNK_SIZE}.txt"
-    
+
+    job_name="trQTL_nominal_${OPTIMAL_PCS}PC_chunk${chunk}"
+    out_file="${OUTPUT_DIR}/chunks/trQTL_nominal_${chunk}_${CHUNK_SIZE}.txt"
+
     echo "QTLtools cis \
         --vcf ${GENOTYPES} \
         --bed ${TRANSCRIPT_BED} \
@@ -112,7 +112,7 @@ for chunk in $(seq 1 $CHUNK_SIZE); do
         -o "$OUTPUT_DIR/logs/${job_name}.out" \
         -e "$OUTPUT_DIR/logs/${job_name}.err" \
         -R "rusage[mem=${MEMORY}]"
-    
+
     echo "  Submitted chunk ${chunk}/${CHUNK_SIZE}"
 done
 
@@ -134,7 +134,7 @@ echo "----------------------------------------------------------------------"
 # Check if all chunks exist
 missing=0
 for chunk in $(seq 1 $CHUNK_SIZE); do
-    chunk_file="${OUTPUT_DIR}/chunks/tQTL_nominal_${chunk}_${CHUNK_SIZE}.txt"
+    chunk_file="${OUTPUT_DIR}/chunks/trQTL_nominal_${chunk}_${CHUNK_SIZE}.txt"
     if [[ ! -f "$chunk_file" ]]; then
         echo "Warning: Missing chunk file: $chunk_file"
         ((missing++))
@@ -150,20 +150,20 @@ fi
 echo "All chunks present. Merging and compressing..."
 
 # Merge all chunks
-cat "$OUTPUT_DIR/chunks/tQTL_nominal_"*"_${CHUNK_SIZE}.txt" | \
-    gzip -c > "$OUTPUT_DIR/tQTL_nominal_${OPTIMAL_PCS}PC_all.txt.gz"
+cat "$OUTPUT_DIR/chunks/trQTL_nominal_"*"_${CHUNK_SIZE}.txt" | \
+    gzip -c > "$OUTPUT_DIR/trQTL_nominal_${OPTIMAL_PCS}PC_all.txt.gz"
 
 # Get file size
-file_size=$(du -h "$OUTPUT_DIR/tQTL_nominal_${OPTIMAL_PCS}PC_all.txt.gz" | cut -f1)
+file_size=$(du -h "$OUTPUT_DIR/trQTL_nominal_${OPTIMAL_PCS}PC_all.txt.gz" | cut -f1)
 
-echo "Merged file created: $OUTPUT_DIR/tQTL_nominal_${OPTIMAL_PCS}PC_all.txt.gz"
+echo "Merged file created: $OUTPUT_DIR/trQTL_nominal_${OPTIMAL_PCS}PC_all.txt.gz"
 echo "File size: $file_size"
 echo ""
 
 # Optional: Remove individual chunks to save space
 read -p "Delete individual chunk files to save space? (y/n): " response
 if [[ "$response" == "y" ]]; then
-    rm "$OUTPUT_DIR/chunks/tQTL_nominal_"*"_${CHUNK_SIZE}.txt"
+    rm "$OUTPUT_DIR/chunks/trQTL_nominal_"*"_${CHUNK_SIZE}.txt"
     echo "Chunk files deleted"
 fi
 
@@ -219,14 +219,14 @@ cat("======================================================================\n")
 EOF
 
 chmod +x "$OUTPUT_DIR/summarize_nominal.R"
-Rscript "$OUTPUT_DIR/summarize_nominal.R" "$OUTPUT_DIR/tQTL_nominal_${OPTIMAL_PCS}PC_all.txt.gz"
+Rscript "$OUTPUT_DIR/summarize_nominal.R" "$OUTPUT_DIR/trQTL_nominal_${OPTIMAL_PCS}PC_all.txt.gz"
 
 echo ""
 echo "=========================================="
-echo "tQTL Nominal Pass Complete!"
+echo "trQTL Nominal Pass Complete!"
 echo "=========================================="
 echo ""
-echo "Output: $OUTPUT_DIR/tQTL_nominal_${OPTIMAL_PCS}PC_all.txt.gz"
+echo "Output: $OUTPUT_DIR/trQTL_nominal_${OPTIMAL_PCS}PC_all.txt.gz"
 echo ""
 echo "Use this file for:"
 echo "  - Colocalization analysis"

@@ -1,4 +1,4 @@
-# cis-QTL Mapping (eQTL and tQTL)
+# cis-QTL Mapping (eQTL and trQTL)
 
 This directory contains scripts for mapping expression and transcript quantitative trait loci (QTLs) using QTLtools (https://qtltools.github.io/qtltools/).
 
@@ -7,7 +7,7 @@ This directory contains scripts for mapping expression and transcript quantitati
 | Analysis | What it does | Output |
 |----------|-------------|--------|
 | **eQTL** | Maps genetic variants affecting gene expression | Genes with expression QTLs |
-| **tQTL** | Maps genetic variants affecting transcript isoform usage | Transcripts with isoform QTLs |
+| **trQTL** | Maps genetic variants affecting transcript isoform usage | Transcripts with isoform QTLs |
 
 ---
 
@@ -26,15 +26,15 @@ This directory contains scripts for mapping expression and transcript quantitati
 - Required for colocalization and fine-mapping
 - Uses optimal PC number from permutation step
 
-### tQTL Mapping
+### trQTL Mapping
 
-**3. `03_tqtl_permutation.sh` - tQTL Discovery**
+**3. `03_trqtl_permutation.sh` - trQTL Discovery**
 - Maps transcript-level isoform QTLs
 - Same approach as eQTL but for transcripts
 - Finds isoform-switching variants
 - Usually needs fewer PCs than eQTL
 
-**4. `04_tqtl_nominal.sh` - Complete tQTL Results**
+**4. `04_trqtl_nominal.sh` - Complete trQTL Results**
 - Gets p-values for ALL transcript-SNP pairs
 - Required for isoform-switching analysis
 - Larger output than eQTL (more transcripts)
@@ -55,16 +55,16 @@ bash 01_eqtl_permutation.sh
 bash 02_eqtl_nominal.sh
 ```
 
-### Complete tQTL Analysis
+### Complete trQTL Analysis
 ```bash
 # Step 1: PC optimization and discovery
-bash 03_tqtl_permutation.sh
-# → Check plots in output/pc_optimization/tQTL_PC_optimization.pdf
+bash 03_trqtl_permutation.sh
+# → Check plots in output/pc_optimization/trQTL_PC_optimization.pdf
 # → Choose optimal PC number (often 0-3 for transcripts)
 
 # Step 2: Nominal pass
 # Edit script to set OPTIMAL_PCS variable
-bash 04_tqtl_nominal.sh
+bash 04_trqtl_nominal.sh
 ```
 
 ---
@@ -81,7 +81,7 @@ bash 04_tqtl_nominal.sh
 3. Balance power vs false discovery
 
 ### Typical Results
-| Dataset | Gene eQTL | Transcript tQTL |
+| Dataset | Gene eQTL | Transcript trQTL |
 |---------|-----------|-----------------|
 | Optimal PCs | 3-10 | 0-5 |
 | Reason | More noise in gene counts | Cleaner isoform quantification |
@@ -90,7 +90,7 @@ bash 04_tqtl_nominal.sh
 
 ## Key Parameters
 
-### Common to both eQTL and tQTL
+### Common to both eQTL and trQTL
 ```bash
 --permute 1000    # 1000 permutations for FDR control
 --chunk X 20      # Parallel processing (20 chunks)
@@ -98,7 +98,7 @@ bash 04_tqtl_nominal.sh
 --cov FILE        # Covariate file (PCs + technical)
 ```
 
-### tQTL-specific
+### trQTL-specific
 ```bash
 --grp-best        # Test best transcript per gene
                   # (avoids multiple testing across isoforms)

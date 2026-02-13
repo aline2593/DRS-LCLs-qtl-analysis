@@ -1,9 +1,9 @@
 #!/usr/bin/env bash
 ################################################################################
-# tQTL Permutation Mapping with PC Optimization using QTLtools
+# trQTL Permutation Mapping with PC Optimization using QTLtools
 # (https://qtltools.github.io/qtltools/)
 ################################################################################
-# Description: Transcript QTL (tQTL) mapping using QTLtools with systematic
+# Description: Transcript QTL (trQTL) mapping using QTLtools with systematic
 #              optimization of principal component covariates.
 #
 # Differs from eQTL:
@@ -14,7 +14,7 @@
 # Approach:
 #   1. Calculate transcript expression PCs
 #   2. Test multiple PC levels (0, 3, 6, ..., 60)
-#   3. Run permutation-based tQTL mapping
+#   3. Run permutation-based trQTL mapping
 #   4. Calculate FDR and π₁ statistics
 #   5. Determine optimal number of PCs
 #
@@ -22,9 +22,9 @@
 #         - Genotype BCF/VCF file
 #         - Base covariate file (SEX, batch, genotype PCs)
 #
-# Output: - tQTL results for each PC level
+# Output: - trQTL results for each PC level
 #         - PC optimization plots
-#         - Final significant tQTLs (FDR < 5%)
+#         - Final significant trQTLs (FDR < 5%)
 #
 # Dependencies: QTLtools, htslib, R (qvalue, data.table)
 ################################################################################
@@ -35,7 +35,7 @@ set -euo pipefail
 TRANSCRIPT_BED="/path/to/transcripts_filtered50.bed.gz"
 GENOTYPES="/path/to/genotypes.bcf"
 BASE_COV="/path/to/base_covariates.txt"  # SEX, GEN, GPC1-3
-OUTPUT_DIR="/path/to/tqtl/output"
+OUTPUT_DIR="/path/to/trQTL/output"
 HELPER_SCRIPT="/path/to/qtltools_runFDR_cis.R"
 
 # QTLtools parameters
@@ -55,7 +55,7 @@ mkdir -p "$OUTPUT_DIR/logs"
 mkdir -p "$OUTPUT_DIR/pc_optimization"
 
 echo "=========================================="
-echo "tQTL Permutation Mapping with PC Optimization"
+echo "trQTL Permutation Mapping with PC Optimization"
 echo "=========================================="
 echo ""
 echo "Transcript Expression: $TRANSCRIPT_BED"
@@ -154,10 +154,10 @@ echo "Covariate files created in: $OUTPUT_DIR/pc_optimization/"
 echo ""
 
 ################################################################################
-# STEP 3: RUN PERMUTATION tQTL MAPPING FOR EACH PC LEVEL
+# STEP 3: RUN PERMUTATION trQTL MAPPING FOR EACH PC LEVEL
 ################################################################################
 
-echo "STEP 3: Running permutation tQTL mapping for each PC level..."
+echo "STEP 3: Running permutation trQTL mapping for each PC level..."
 echo "----------------------------------------------------------------------"
 echo "This will submit multiple jobs to the cluster"
 echo "Note: --grp-best flag groups transcripts by gene (tests best per gene)"
@@ -177,8 +177,8 @@ for pc_num in $(seq 0 3 60); do
     # Run QTLtools in chunks for parallelization
     for chunk in $(seq 1 $CHUNK_SIZE); do
 
-        job_name="tQTL_perm_${pc_num}PC_chunk${chunk}"
-        out_file="${OUTPUT_DIR}/pc_optimization/tQTL_perm_${pc_num}PC_${chunk}_${CHUNK_SIZE}.txt"
+        job_name="trQTL_perm_${pc_num}PC_chunk${chunk}"
+        out_file="${OUTPUT_DIR}/pc_optimization/trQTL_perm_${pc_num}PC_${chunk}_${CHUNK_SIZE}.txt"
 
         echo "QTLtools cis \
             --vcf ${GENOTYPES} \
@@ -220,8 +220,8 @@ for pc_num in $(seq 0 3 60); do
     echo "Processing ${pc_num} PCs..."
 
     # Collect all chunk files
-    chunk_files="${OUTPUT_DIR}/pc_optimization/tQTL_perm_${pc_num}PC_*_${CHUNK_SIZE}.txt"
-    merged_file="${OUTPUT_DIR}/pc_optimization/tQTL_perm_${pc_num}PC_merged.txt.gz"
+    chunk_files="${OUTPUT_DIR}/pc_optimization/trQTL_perm_${pc_num}PC_*_${CHUNK_SIZE}.txt"
+    merged_file="${OUTPUT_DIR}/pc_optimization/trQTL_perm_${pc_num}PC_merged.txt.gz"
 
     # Check if chunks exist
     if ! ls ${chunk_files} 1> /dev/null 2>&1; then
@@ -257,10 +257,10 @@ setwd(commandArgs(trailingOnly = TRUE)[1])
 numpcs <- data.frame()
 
 # P-value distributions
-pdf(file = "tQTL_pvalue_distributions.pdf", useDingbats = FALSE, width = 12, height = 8)
+pdf(file = "trQTL_pvalue_distributions.pdf", useDingbats = FALSE, width = 12, height = 8)
 par(mfrow = c(3, 4))
 
-for (f in list.files(pattern = "tQTL_perm_.*PC_merged\\.txt\\.gz$")) {
+for (f in list.files(pattern = "trQTL_perm_.*PC_merged\\.txt\\.gz$")) {
 
   cat("Processing:", f, "\n")
 
@@ -300,7 +300,7 @@ dev.off()
 numpcs <- numpcs[order(numpcs$n_pcs), ]
 
 # PC optimization plots
-pdf(file = "tQTL_PC_optimization.pdf", useDingbats = FALSE, height = 7, width = 12)
+pdf(file = "trQTL_PC_optimization.pdf", useDingbats = FALSE, height = 7, width = 12)
 
 par(mfrow = c(1, 2))
 
@@ -312,7 +312,7 @@ plot(numpcs$n_pcs, numpcs$n_etranscripts_fdr5,
      lwd = 2,
      xlab = "Number of Transcript Expression PCs",
      ylab = "Number of eTranscripts (FDR < 5%)",
-     main = "tQTL Discovery vs PC Number",
+     main = "trQTL Discovery vs PC Number",
      cex.lab = 1.2,
      cex.axis = 1.1)
 
@@ -335,7 +335,7 @@ grid()
 dev.off()
 
 # Save summary table
-fwrite(numpcs, "tQTL_PC_optimization_summary.txt", sep = "\t", quote = FALSE)
+fwrite(numpcs, "trQTL_PC_optimization_summary.txt", sep = "\t", quote = FALSE)
 
 cat("\n")
 cat("======================================================================\n")
@@ -344,7 +344,7 @@ cat("======================================================================\n")
 print(numpcs)
 cat("======================================================================\n")
 cat("\n")
-cat("Optimal PC number: Check where tQTL discovery plateaus\n")
+cat("Optimal PC number: Check where trQTL discovery plateaus\n")
 cat("Note: May need fewer PCs than eQTL (less noise in isoform quantification)\n")
 cat("Typical range: 0-6 PCs for ~60 samples\n")
 cat("\n")
@@ -355,20 +355,20 @@ Rscript "$OUTPUT_DIR/pc_optimization_analysis.R" "$OUTPUT_DIR/pc_optimization"
 
 echo ""
 echo "PC optimization analysis complete!"
-echo "Check: $OUTPUT_DIR/pc_optimization/tQTL_PC_optimization.pdf"
+echo "Check: $OUTPUT_DIR/pc_optimization/trQTL_PC_optimization.pdf"
 echo ""
 
 ################################################################################
-# STEP 6: EXTRACT SIGNIFICANT tQTLs WITH OPTIMAL PC NUMBER
+# STEP 6: EXTRACT SIGNIFICANT trQTLs WITH OPTIMAL PC NUMBER
 ################################################################################
 
-echo "STEP 6: Extracting significant tQTLs..."
+echo "STEP 6: Extracting significant trQTLs..."
 echo "----------------------------------------------------------------------"
 
 # User should specify optimal PC number based on plots
 read -p "Enter optimal number of PCs (e.g., 0, 3, 6): " OPTIMAL_PCS
 
-OPTIMAL_FILE="${OUTPUT_DIR}/pc_optimization/tQTL_perm_${OPTIMAL_PCS}PC_merged.txt.gz"
+OPTIMAL_FILE="${OUTPUT_DIR}/pc_optimization/trQTL_perm_${OPTIMAL_PCS}PC_merged.txt.gz"
 
 if [[ ! -f "$OPTIMAL_FILE" ]]; then
     echo "Error: File not found: $OPTIMAL_FILE"
@@ -376,14 +376,14 @@ if [[ ! -f "$OPTIMAL_FILE" ]]; then
 fi
 
 echo "Using ${OPTIMAL_PCS} PCs as optimal"
-echo "Calculating FDR and extracting significant tQTLs..."
+echo "Calculating FDR and extracting significant trQTLs..."
 
 # Run FDR calculation script
 if [[ -f "$HELPER_SCRIPT" ]]; then
     Rscript "$HELPER_SCRIPT" \
         "$OPTIMAL_FILE" \
         0.05 \
-        "${OUTPUT_DIR}/tQTLs_FDR5_${OPTIMAL_PCS}PCs"
+        "${OUTPUT_DIR}/trQTLs_FDR5_${OPTIMAL_PCS}PCs"
 else
     echo "Warning: Helper script not found: $HELPER_SCRIPT"
     echo "Please run FDR calculation manually"
@@ -391,12 +391,12 @@ fi
 
 echo ""
 echo "=========================================="
-echo "tQTL Permutation Mapping Complete!"
+echo "trQTL Permutation Mapping Complete!"
 echo "=========================================="
 echo ""
 echo "Results:"
 echo "  PC optimization: $OUTPUT_DIR/pc_optimization/"
-echo "  Significant tQTLs: ${OUTPUT_DIR}/tQTLs_FDR5_${OPTIMAL_PCS}PCs.significant.txt"
+echo "  Significant trQTLs: ${OUTPUT_DIR}/trQTLs_FDR5_${OPTIMAL_PCS}PCs.significant.txt"
 echo ""
 echo "Next step: Run nominal pass with ${OPTIMAL_PCS} PCs"
 echo ""
