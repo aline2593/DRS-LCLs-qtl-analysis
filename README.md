@@ -10,7 +10,6 @@
   molecular levels in 60 lymphoblastoid cell lines sequenced with Oxford
   Nanopore Direct RNA sequencing (DRS).
 
----
 ![Donor enrichment](figures/Github_figure.png)
 
 ### Overview
