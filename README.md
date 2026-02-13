@@ -11,7 +11,6 @@
   Nanopore Direct RNA sequencing (DRS).
 
 ![Donor enrichment](figures/Github_figure.png)
-
 ### Overview
 
 **Transcript-Level Analysis:**
