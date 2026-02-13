@@ -51,7 +51,7 @@
 **Why This Pipeline?**
 
 - **Long-read advantage:** Sequences full-length transcripts, capturing complete isoform structures
-- **Multi-level integration:** Connects genetic variants to expression, splicing, and modifications
+- **Multi-level integration:** Connects genetic variants to expression, transcript isoforms, and RNA modifications
 - **Rigorous validation:** Multiple quantification methods, SQANTI3 validation, replication cohorts
 - **Production-ready:** Optimized parameters, comprehensive documentation, publication-quality outputs
 - **Reproducible:** Complete environment specifications, version-controlled code
@@ -121,11 +121,8 @@ Discovery Results
       ↓
 [Test in short-read cohort]
       ↓
-[Compare technologies]
-      ↓
-[Functional annotation]
-      ↓
-Final validated QTLs
+[Assess replication rate]
+  
 ```
 
 ---
@@ -187,7 +184,7 @@ Rscript 02_flair_complete_analysis_with_sqanti.R
 # Stage 3: QTL mapping
 cd ../03_qtl_mapping
 bash 01_eqtl_permutation.sh    # Gene-level QTLs
-bash 03_tqtl_permutation.sh    # Transcript-level QTLs
+bash 03_trqtl_permutation.sh    # Transcript-level QTLs
 
 # Stage 4: m⁶A modifications
 cd ../04_m6a_modification_analysis
@@ -207,20 +204,20 @@ scripts/
 │   ├── 03_longread_vs_shortread_comparison.R
 │   └── README.md
 │
-├── 02_transcript_quantification/              ← Major component
-│   ├── 01_flair_transcript_quantification.sh   (Primary method)
+├── 02_transcript_quantification/             
+│   ├── 01_flair_transcript_quantification.sh    ← Major component
 │   ├── 02_flair_complete_analysis_with_sqanti.R
 │   ├── 03_transcript_dominance_assessment.R
-│   ├── 04_qtl_example_plots.R
-│   ├── 05_bambu_transcript_quantification.R    (Alternative)
-│   ├── 06_stringtie_transcript_quantification.sh (Alternative)
-│   └── README.md                               (Detailed documentation)
+│   ├── 04_bambu_transcript_quantification.R       (Alternative)
+│   ├── 05_stringtie_transcript_quantification.sh  (Alternative)
+│   └── README.md                               
 │
 ├── 03_qtl_mapping/
 │   ├── 01_eqtl_permutation.sh
 │   ├── 02_eqtl_nominal.sh
-│   ├── 03_tqtl_permutation.sh
-│   ├── 04_tqtl_nominal.sh
+│   ├── 03_trqtl_permutation.sh
+│   ├── 04_trqtl_nominal.sh
+│   ├── 05_qtl_plot_examples.R
 │   └── README.md
 │
 ├── 04_m6a_modification_analysis/
@@ -234,17 +231,6 @@ scripts/
     ├── 02_compare_qtl_discoveries.R
     └── README.md
 ```
----
-
-### Performance Metrics
-
-| Step | Run Time | Memory | Storage |
-|------|----------|--------|---------|
-| Gene quantification | 2-4 hours/sample | 40 GB | 10 GB/sample |
-| Transcript quantification | 4-8 hours total | 25 GB | 50 GB |
-| eQTL permutation | 2-4 hours/PC level | 25 GB | 5 GB |
-| tQTL permutation | 3-5 hours/PC level | 25 GB | 8 GB |
-
 ---
 
 ## Methods
@@ -312,9 +298,9 @@ Each analysis folder contains detailed documentation:
 - Important for understanding which isoform is functionally relevant
 - Used to prioritize tQTL candidates
 
-**tQTL vs eQTL:**
+**trQTL vs eQTL:**
 - **eQTL:** Changes total gene expression (sum of all isoforms)
-- **tQTL:** Changes relative isoform usage (ratio between isoforms)
+- **trQTL:** Changes relative isoform usage (ratio between isoforms)
 - tQTLs can exist without affecting total expression
 - Uses `--grp-best` flag to group transcripts by gene
 
@@ -428,8 +414,11 @@ This project is licensed under the MIT License - see the [LICENSE](LICENSE) file
 
 ## Contact
 
-**Aline Réal, PhD  
-**areal@nyegnome.org
+Aline Réal, PhD  
+areal@nyegnome.org
+
+Ana Viñueala, PhD
+AVinuela002@dundee.ac.uk
 
 **For questions:** Use [GitHub Issues](https://github.com/yourusername/DRS-LCLs-qtl-analysis/issues)
 
@@ -437,11 +426,12 @@ This project is licensed under the MIT License - see the [LICENSE](LICENSE) file
 ## Acknowledgments
 
 **Funding:**
-- NIH/NHGRI (Grant #R01HGXXXXXX)
-- Additional funding sources
+- AMS Springboard Award (SBF007\100033) from Ana Viñuela
 
 **Computational Resources:**
-- Your HPC Cluster Name
+- Baobab HPC cluster, University of Geneva
+- NYGC High Performance Computing resources, New York Genome Center
+- Minerva HPC cluster, Icahn School of Medicine at Mount Sinai
 ---
 
 <div align="center">
