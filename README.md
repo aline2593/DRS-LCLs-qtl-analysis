@@ -417,7 +417,7 @@ This project is licensed under the MIT License - see the [LICENSE](LICENSE) file
 Aline Réal, PhD  
 areal@nyegnome.org
 
-Ana Viñueala, PhD
+Ana Viñueala, PhD  
 AVinuela002@dundee.ac.uk
 
 **For questions:** Use [GitHub Issues](https://github.com/yourusername/DRS-LCLs-qtl-analysis/issues)
