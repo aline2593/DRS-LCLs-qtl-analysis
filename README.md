@@ -1,4 +1,4 @@
-[README_general_Github.md](https://github.com/user-attachments/files/25267606/README_general_Github.md)
+[README.md](https://github.com/user-attachments/files/25267606/README_general_Github.md)
 # Direct long-read RNA sequencing uncovers functional variation affecting transcript production and RNA modifications.
 
 [![DOI](https://img.shields.io/badge/DOI-10.5281%2Fzenodo.1234567-blue.svg)](https://doi.org/10.5281/zenodo.12555794)
