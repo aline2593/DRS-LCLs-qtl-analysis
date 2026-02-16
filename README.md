@@ -372,7 +372,7 @@ python sqanti3_qc.py isoforms.gtf annotation.gtf genome.fa
 
 If you use this pipeline in your research, please cite:
 
-Réal A. et al. (2024). Long-read RNA sequencing reveals transcript-level genetic regulation in lymphoblastoid cell lines. Research Square. https://doi.org/10.21203/rs.3.rs-4613444/v1
+Réal A. et al. (2024). Long-read RNA sequencing reveals transcript-level genetic regulation in lymphoblastoid cell lines. Research Square. (https://doi.org/10.21203/rs.3.rs-4613444/v1)
 
 ### Key Software Citations
 
