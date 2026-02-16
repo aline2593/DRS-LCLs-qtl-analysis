@@ -363,7 +363,11 @@ python sqanti3_qc.py isoforms.gtf annotation.gtf genome.fa
 - Output: 500 MB - 1 GB compressed
 
 ---
+## Data availability
+Zenodo (10.5281/zenodo.12555794): BAM files and quantifications derived, as well as m⁶A modification information
+Data was deposited in ENA, under the following accession number PRJEB76585. This includes raw fast5 files
 
+---
 ## Citation
 
 If you use this pipeline in your research, please cite:
