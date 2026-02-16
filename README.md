@@ -373,13 +373,12 @@ python sqanti3_qc.py isoforms.gtf annotation.gtf genome.fa
 If you use this pipeline in your research, please cite:
 
 ```bibtex
-@article{yourpaper2024,
-  title={Long-read RNA sequencing reveals transcript-level genetic regulation 
-         in lymphoblastoid cell lines},
-  author={Aline Réal, Andrew Brown, Gisella Puga Yung, Christelle Borel, Nikolaos M. R. Lykoskoufis, Jörg D. Seebach, Emmanouil T. Dermitzakis, Anna Ramisch and Ana Viñuela},
-  journal={ResearchSqaure},
-  year={2024},
-  doi={[10.21203/rs.3.rs-4613444/v2]}
+@article{real2024longread,
+  title   = {Long-read RNA sequencing reveals transcript-level genetic regulation in lymphoblastoid cell lines},
+  author  = {R{\'e}al, Aline and Brown, Andrew and Puga Yung, Gisella and Borel, Christelle and Lykoskoufis, Nikolaos M. R. and Seebach, J{\"o}rg D. and Dermitzakis, Emmanouil T. and Ramisch, Anna and Vi{\~n}uela, Ana},
+  journal = {Research Square},
+  year    = {2024},
+  doi     = {10.21203/rs.3.rs-4613444/v2}
 }
 ```
 
