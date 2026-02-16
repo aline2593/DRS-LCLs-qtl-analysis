@@ -376,10 +376,10 @@ If you use this pipeline in your research, please cite:
 @article{yourpaper2024,
   title={Long-read RNA sequencing reveals transcript-level genetic regulation 
          in lymphoblastoid cell lines},
-  author={Your Name and Collaborators},
-  journal={Journal Name},
+  author={Aline Réal, Andrew Brown, Gisella Puga Yung, Christelle Borel, Nikolaos M. R. Lykoskoufis, Jörg D. Seebach, Emmanouil T. Dermitzakis, Anna Ramisch and Ana Viñuela},
+  journal={ResearchSqaure},
   year={2024},
-  doi={10.xxxx/xxxxx}
+  doi={[10.21203/rs.3.rs-4613444/v2]}
 }
 ```
 
