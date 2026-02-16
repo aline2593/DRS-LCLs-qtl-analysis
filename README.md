@@ -41,7 +41,7 @@
 2. **Transcript Isoform Discovery** - Full-length isoform detection (FLAIR), validation (SQANTI3), quantification
 3. **QTL Mapping** - Multi-level genetic association testing with systematic covariate optimization
 4. **m⁶A Modification Analysis** - Detection of RNA modifications and associated genetic variants
-5. **Validation & Replication** - Testing discoveries in independent short-read cohorts
+5. **Replication** - Testing discoveries in independent short-read cohorts
 
 ---
 
