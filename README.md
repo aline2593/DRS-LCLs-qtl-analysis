@@ -112,8 +112,14 @@ Expression data + Genotypes
   All variants       All variants       All variants
 
 ```
+### Stage 4: m6A RNA modification and m6aQTL discovery
 
-### Stage 4: Replication
+```
+TO BE ADDED HERE 
+     
+```
+
+### Stage 5: Replication
 
 ```
 Discovery Results
