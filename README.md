@@ -113,7 +113,7 @@ Expression data + Genotypes
 
 ```
 
-### Stage 4: Replication and Validation
+### Stage 4: Replication
 
 ```
 Discovery Results
