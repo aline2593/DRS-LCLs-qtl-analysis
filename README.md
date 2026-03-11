@@ -115,8 +115,27 @@ Expression data + Genotypes
 ### Stage 4: m6A RNA modification and m6aQTL discovery
 
 ```
-TO BE ADDED HERE 
-     
+Raw FASTQ + Fast5 files
+      ↓
+[Align to transcriptome] ──────── minimap2
+      ↓
+[Signal-level event alignment] ── f5c eventalign
+      ↓
+[m⁶A site inference] ──────────── m6anet (1000 iterations)
+      ↓
+[Merge per-sample outputs] ──────── Python (modification ratio matrix)
+      ↓
+[Filter: prob >0.9, ≥50% samples, protein-coding/lncRNA]
+      ↓
+[Map transcript → genomic coordinates]
+      ↓
+[m⁶AQTL permutation pass] ─────── QTLtools cis --grp-best
+      ↓
+[FDR calibration + PC selection]
+      ↓
+[Nominal pass] ─────────────────── all cis SNP–modification pairs
+      ↓
+[Replication] ──────────────────── short-read eQTL / sQTL + Yoruba m⁶A-seq   
 ```
 
 ### Stage 5: Replication
@@ -127,7 +146,6 @@ Discovery Results
 [Test in short-read cohort]
       ↓
 [Assess replication rate]
-  
 ```
 
 ---
@@ -145,7 +163,9 @@ featureCounts (subread v2.0+)
 FLAIR (v3.0.0)
 SQANTI3 (v3.0+)
 QTLtools (v1.3+)
-R (v4.0+) with packages: edgeR, data.table, qvalue, ggplot2
+f5c (v1.2+)
+m6anet (v2.1.0+)
+R (v4.0+) with packages: edgeR, data.table, qvalue, ggplot2, GenomicRanges, UpSetR
 ```
 ### Installation
 
@@ -191,9 +211,18 @@ cd ../03_qtl_mapping
 bash 01_eqtl_permutation.sh    # Gene-level QTLs
 bash 03_trqtl_permutation.sh    # Transcript-level QTLs
 
-# Stage 4: m⁶A modifications
+# Stage 4: m⁶A modifications and m⁶AQTLs
 cd ../04_m6a_modification_analysis
-bash 01_m6a_detection.sh
+bash 00_ont_m6a_detection_pipeline.sh              # align, eventalign, m6anet inference
+bash 00_ont_m6a_detection_pipeline.sh --merge-only # merge per-sample outputs
+Rscript 01_m6a_filter_and_coords.R                # filter + genomic coordinate mapping
+Rscript 02_maQTL_mapping_pipeline.R               # BED prep + PCA + permutation pass
+Rscript 02_maQTL_mapping_pipeline.R --merge-perm
+Rscript 02_maQTL_mapping_pipeline.R --fdr         # PC selection + FDR
+Rscript 02_maQTL_mapping_pipeline.R --nominal
+Rscript 02_maQTL_mapping_pipeline.R --merge-nominal
+Rscript 03_maQTL_replication_QTL.R                # eQTL + sQTL replication
+Rscript 04_maQTL_yoruba_replication.R             # Yoruba m⁶A-seq validation
 ```
 
 ---
@@ -226,9 +255,12 @@ scripts/
 │   └── README.md
 │
 ├── 04_m6a_modification_analysis/
-│   ├── 01_m6a_detection.sh
-│   ├── 02_m6a_quantification.R
-│   ├── 03_m6a_qtl_mapping.sh
+│   ├── 00_ont_m6a_detection_pipeline.sh       ← ONT alignment → m6anet inference → merge
+│   ├── 01_m6a_filter_and_coords.R             ← filter + transcript→genome mapping
+│   ├── 02_maQTL_mapping_pipeline.R            ← BED prep → PCA → QTL mapping
+│   ├── 03_maQTL_replication_QTL.R             ← eQTL / sQTL replication
+│   ├── 04_maQTL_yoruba_replication.R          ← Yoruba m⁶A-seq orthogonal validation
+│   ├── 05_maQTL_visualization.R               ← figures and plots
 │   └── README.md
 │
 └── 05_replication_analysis/
@@ -284,6 +316,29 @@ scripts/
 - Permutation pass: best SNP per gene/transcript
 - Nominal pass: all tested SNP-gene pairs
 
+### m⁶A Modification Detection and m⁶AQTL Mapping
+
+**Detection:**
+- Tool: m6anet v2.1.0 (trained on SQK-RNA002 chemistry)
+- Signal alignment: f5c eventalign
+- Inference: 1000 sampling rounds per site; sites retained at probability >0.9
+- Phenotype: per-sample modification ratio (fraction of modified reads)
+
+**Filtering:**
+- Sites with >50% missing values removed
+- Restricted to protein-coding genes and lncRNAs (GENCODE v46)
+- Transcript-relative positions mapped to genomic coordinates using exon-aware cumulative length conversion
+
+**QTL Mapping:**
+- Same QTLtools framework as eQTL/tQTL (see above)
+- `--grp-best` flag groups multiple modification sites per transcript
+- Selected covariates: sex, 3 genotype PCs, 3 modification PCs
+- FDR < 10%
+
+**Replication:**
+- Short-read: eQTL and sQTL overlap via nominal p-value matching + q-value FDR
+- Orthogonal: overlap with Yoruba LCL m⁶A-seq peaks (1000 Genomes Project)
+  
 ---
 
 ## Documentation
@@ -293,7 +348,7 @@ Each analysis folder contains detailed documentation:
 - **[Gene Expression Quantification](scripts/01_gene_expression_quantification/README.md)** - Alignment, counting, normalization, filtering
 - **[Transcript Quantification](scripts/02_transcript_quantification/README.md)**  **Detailed guide** - FLAIR workflow, SQANTI3 validation, alternative methods comparison, dominance assessment
 - **[QTL Mapping](scripts/03_qtl_mapping/README.md)** - PC optimization, permutation testing, nominal pass
-- **[m⁶A Analysis](scripts/04_m6a_modification_analysis/README.md)** - Modification detection, quantification, QTL mapping
+- **[m⁶A Analysis](scripts/04_m6a_modification_analysis/README.md)** - ONT signal-level modification detection (m6anet), filtering, genomic coordinate mapping, m⁶AQTL permutation and nominal passes, replication in short-read eQTL/sQTL and Yoruba m⁶A-seq datasets
 - **[Replication](scripts/05_replication_analysis/README.md)** - Short-read validation, technology comparison
 
 ### Key Concepts Explained
@@ -370,7 +425,7 @@ python sqanti3_qc.py isoforms.gtf annotation.gtf genome.fa
 
 ---
 ## Data availability
-- Zenodo (10.5281/zenodo.12555794): BAM files and quantifications derived, as well as m⁶A modification information.
+- Zenodo (10.5281/zenodo.18763244): BAM files and quantifications derived, as well as m⁶A modification information.
 - Data was deposited in ENA, under the following accession number PRJEB76585. This includes raw fast5 files.
 
 ---
@@ -390,6 +445,10 @@ Réal A. et al. (2024). Long-read RNA sequencing reveals transcript-level geneti
 **Alignment & QTL Mapping:**
 - minimap2: Li, H. (2018). Minimap2: pairwise alignment for nucleotide sequences. *Bioinformatics*, 34(18), 3094-3100.
 - QTLtools: Delaneau, O. et al. (2017). A complete tool set for molecular QTL discovery and analysis. *Nature Communications*, 8, 15452.
+
+**m⁶A Detection:**
+- m6anet: Hendra, C. et al. (2022). Detection of m6A from direct RNA sequencing using a multiple instance learning framework. *Nature Methods*, 19(12), 1590-1598.
+- f5c: Gamaarachchi, H. et al. (2020). GPU accelerated adaptive banded event alignment for efficient nanopore basecalling. *BMC Bioinformatics*, 21(1), 343.
 
 ---
 
@@ -438,8 +497,8 @@ AVinuela002@dundee.ac.uk
 
 **If you find this work useful, please cite our paper and star this repository**
 
-[Report Bug](https://github.com/yourusername/DRS-LCLs-qtl-analysis/issues) · 
-[Request Feature](https://github.com/yourusername/DRS-LCLs-qtl-analysis/issues) · 
-[Documentation](https://github.com/yourusername/DRS-LCLs-qtl-analysis/wiki)
+[Report Bug](https://github.com/aline2593/DRS-LCLs-qtl-analysis/issues) · 
+[Request Feature](https://github.com/aline2593/DRS-LCLs-qtl-analysis/issues) · 
+[Documentation](https://github.com/aline2593/DRS-LCLs-qtl-analysis/wiki)
 
 </div>
