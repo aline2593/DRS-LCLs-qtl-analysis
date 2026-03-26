@@ -345,7 +345,7 @@ scripts/
 
 Each analysis folder contains detailed documentation:
 
-- **[Gene Expression Quantification](scripts/01_gene_expression_quantification/README.md)** - Alignment, counting, normalization, filtering
+- **[Gene Expression Quantification](scripts/01_gene_expression_quantification/README_gene_expression_fin...)** - Alignment, counting, normalization, filtering
 - **[Transcript Quantification](scripts/02_transcript_quantification/README.md)**  **Detailed guide** - FLAIR workflow, SQANTI3 validation, alternative methods comparison, dominance assessment
 - **[QTL Mapping](scripts/03_qtl_mapping/README.md)** - PC optimization, permutation testing, nominal pass
 - **[m⁶A Analysis](scripts/04_m6a_modification_analysis/README.md)** - ONT signal-level modification detection (m6anet), filtering, genomic coordinate mapping, m⁶AQTL permutation and nominal passes, replication in short-read eQTL/sQTL and Yoruba m⁶A-seq datasets
