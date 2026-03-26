@@ -461,7 +461,7 @@ Contributions are welcome! Please:
 3. Commit your changes
 4. Submit a pull request
 
-For bug reports or questions, please [open an issue](https://github.com/yourusername/DRS-LCLs-qtl-analysis/issues).
+For bug reports or questions, please [open an issue](https://github.com/aline2593/DRS-LCLs-qtl-analysis/issues).
 
 ---
 
@@ -479,7 +479,7 @@ areal@nyegnome.org
 Ana Viñueala, PhD  
 AVinuela002@dundee.ac.uk
 
-**For questions:** Use [GitHub Issues](https://github.com/yourusername/DRS-LCLs-qtl-analysis/issues)
+**For questions:** Use [GitHub Issues](https://github.com/aline2593/DRS-LCLs-qtl-analysis/issues)
 
 ---
 ## Acknowledgments
