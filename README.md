@@ -350,7 +350,7 @@ Each analysis folder contains detailed documentation:
 - **[QTL Mapping](scripts/03_qtl_mapping/README_qtl_mapping.md)** - PC optimization, permutation testing, nominal pass
 - **[m⁶A Analysis](scripts/04_m6a_modifications/README.md)** - ONT signal-level modification detection (m6anet), filtering, genomic coordinate mapping, m⁶AQTL permutation and nominal passes, replication in short-read eQTL/sQTL and Yoruba m⁶A-seq datasets
 - **[Replication](scripts/05_shortread_recapitulation_DRS/README.md)** - Short-read validation, technology comparison
-- 
+ 
 ### Key Concepts Explained
 
 **Transcript Dominance:**
