@@ -10,19 +10,32 @@
 #   2. SAM → BAM conversion          (samtools)
 #   3. BAM sorting                   (samtools)
 #   4. BAM indexing                  (samtools)
+#   4.5 fast5 → slow5 conversion     (slow5tools) [optional, see note below]
 #   5. Event alignment               (f5c eventalign)
 #   6. m6anet data preparation       (m6anet dataprep)
 #   7. m6A inference                 (m6anet inference)
+#   8. Merge per-sample outputs      (Python/pandas)
 #
 # Requirements:
 #   - minimap2 v2.17+
 #   - samtools v1.23
 #   - f5c v1.2
 #   - m6anet v2.1.0
+#   - slow5tools (required if using slow5/blow5 input for f5c eventalign)
+#     Install: https://github.com/hasindu2008/slow5tools
 #   - conda environment: ont_env
 #
+# Note on fast5/slow5:
+#   f5c eventalign requires raw signal data in one of two forms:
+#     (a) fast5 files indexed with `f5c index` (Option A), OR
+#     (b) slow5/blow5 files passed via --slow5 (Option B, recommended).
+#   This pipeline uses Option B by default. Run Step 4.5 to convert
+#   fast5 → slow5 before running Step 5, unless your basecaller already
+#   produced a .index file alongside your fastq (check for ${fastq}.index).
+#
 # Usage:
-#   bash ont_m6a_pipeline.sh
+#   bash ont_m6a_pipeline.sh            # Submit Steps 1-7
+#   bash ont_m6a_pipeline.sh --merge-only  # Run Step 8 after all jobs finish
 #
 # Configuration: Edit the variables in the CONFIG section below.
 # =============================================================================
@@ -41,13 +54,19 @@ REFERENCE_CDNA="Homo_sapiens.GRCh37.67.cdna.all.fa"
 MINIMAP2="/path/to/minimap2-2.17_x64-linux/minimap2"
 SAMTOOLS="${HOME}/bin/samtools"
 
+# fast5 / slow5 paths (for f5c eventalign — see Step 4.5 and Step 5)
+FAST5_DIR="/path/to/fast5_dir"   # original fast5 directory
+SLOW5_DIR="/path/to/slow5_dir"   # output directory for converted slow5/blow5 files
+
 EVENTALIGN_OUT="/path/to/output/eventalign"
 M6ANET_OUT="/path/to/output/m6anet"
+MERGED_OUT="${M6ANET_OUT}/Nanopore_ModificationsRatio.txt"
 
 SLURM_PARTITION="public-cpu"
-SLURM_MEM="10G"          # Increase for Steps 5-7 (eventalign/m6anet); cluster-dependent
+SLURM_MEM="10G"
 # NOTE: --time limits are not set. Add --time=HH:MM:SS to each sbatch call
-#       according to your cluster policy. Typical ranges: 2h (Steps 1-4), 24-48h (Steps 5-7).
+#       according to your cluster policy.
+#       Typical ranges: 2h (Steps 1-4), 4-8h (Step 4.5), 24-48h (Steps 5-7).
 
 # =============================================================================
 # HELPERS
@@ -151,11 +170,80 @@ for fastq in ${FASTQ_PATTERN}; do
 done
 
 # =============================================================================
+# STEP 4.5: Raw signal preparation for f5c eventalign
+# =============================================================================
+# f5c eventalign requires access to raw signal data. Choose ONE option:
+#
+#   Option A — f5c index (fast5 files):
+#     Index your fast5 files directly with f5c index.
+#     Use this if your basecaller produced fast5 files and you do NOT
+#     want to convert to slow5. Check first whether ${fastq}.index already
+#     exists — some basecallers (e.g. Guppy) produce it automatically.
+#     If it exists, skip this step entirely.
+#     In Step 5: remove --slow5 and add -d ${FAST5_DIR}
+#
+#   Option B — slow5/blow5 conversion (recommended):
+#     Convert fast5 → slow5/blow5 using slow5tools. More portable and
+#     faster for large datasets. Only needs to be run once per dataset.
+#     Install slow5tools: https://github.com/hasindu2008/slow5tools
+#     In Step 5: keep --slow5 ${SLOW5_DIR}/${sample}.blow5
+#
+# Uncomment the option you want to use. Only run ONE of them.
+# Wait for this job to complete before submitting Step 5.
+# =============================================================================
+
+# ── Option A: f5c index (fast5) ──────────────────────────────────────────────
+# log "Step 4.5 (Option A): Indexing fast5 files with f5c index"
+#
+# for fastq in ${FASTQ_PATTERN}; do
+#     sample=$(get_sample_id "$fastq")
+#     log "  Submitting f5c index for: ${sample}"
+#
+#     sbatch \
+#         --partition="${SLURM_PARTITION}" \
+#         --mem="${SLURM_MEM}" \
+#         --job-name="f5c_index_${sample}" \
+#         --wrap="
+#             echo 'Indexing fast5 for sample: ${sample}'
+#             conda activate ont_env
+#             f5c index \
+#                 -d ${FAST5_DIR} \
+#                 ${fastq}
+#             echo 'Indexing complete for: ${sample}'
+#         "
+# done
+
+# ── Option B: slow5/blow5 conversion (default) ───────────────────────────────
+log "Step 4.5 (Option B): Converting fast5 to slow5/blow5 (slow5tools)"
+mkdir -p "${SLOW5_DIR}"
+
+sbatch \
+    --partition="${SLURM_PARTITION}" \
+    --mem="${SLURM_MEM}" \
+    --job-name="fast5_to_slow5" \
+    --wrap="
+        echo 'Converting fast5 → slow5/blow5'
+        slow5tools f2s ${FAST5_DIR} \
+            -d ${SLOW5_DIR} \
+            --iop 8
+        echo 'Conversion complete. Output: ${SLOW5_DIR}'
+    "
+
+# =============================================================================
 # STEP 5: Event Alignment (f5c eventalign)
+# =============================================================================
+# By default uses slow5/blow5 via --slow5 (Option B from Step 4.5).
+#
+# If you used Option A (f5c index), replace:
+#   --slow5 ${SLOW5_DIR}/${sample}.blow5
+# with:
+#   -d ${FAST5_DIR}
+#
+# NOTE: Sorted BAM files (Steps 3-4) AND raw signal data (Step 4.5)
+#       must both be ready before submitting this step.
 # =============================================================================
 
 log "Step 5: f5c eventalign"
-
 mkdir -p "${EVENTALIGN_OUT}"
 
 for fastq in ${FASTQ_PATTERN}; do
@@ -170,9 +258,10 @@ for fastq in ${FASTQ_PATTERN}; do
             echo 'Running eventalign: ${sample}'
             conda activate ont_env
             f5c eventalign \
-                -b /path/to/sorted/bam/file/sorted.alignment_transcriptome_${sample}.bam \
+                -b sorted.alignment_transcriptome_${sample}.bam \
                 -g ${REFERENCE_CDNA} \
                 -r ${fastq} \
+                --slow5 ${SLOW5_DIR}/${sample}.blow5 \
                 --scale-events \
                 --iop 50 \
                 --rna \
@@ -233,6 +322,11 @@ for fastq in ${FASTQ_PATTERN}; do
 done
 
 log "All jobs submitted successfully."
+log ""
+log "REMINDER: Once all SLURM inference jobs (Step 7) have finished, run:"
+log "   bash $(basename "$0") --merge-only"
+log "This will merge per-sample outputs into: ${MERGED_OUT}"
+log "Then run the R filtering script: Rscript m6a_filter_and_coords.R"
 
 # =============================================================================
 # STEP 8: Merge Per-Sample m6anet Outputs into a Single Matrix
@@ -244,10 +338,7 @@ log "All jobs submitted successfully."
 #
 # Run manually once all SLURM jobs are done:
 #   bash ont_m6a_pipeline.sh --merge-only
-# Or call merge_m6anet_outputs() directly in an interactive session.
 # =============================================================================
-
-MERGED_OUT="${M6ANET_OUT}/Nanopore_ModificationsRatio.txt"
 
 merge_m6anet_outputs() {
     log "Step 8: Merging per-sample m6anet outputs..."
@@ -299,14 +390,7 @@ EOF
     log "Next step: run m6a_filter_and_coords.R using ${MERGED_OUT} as input."
 }
 
-# Run merge automatically only if --merge-only flag is passed,
-# otherwise print a reminder so the user knows to run it after jobs finish.
+# Run merge only if --merge-only flag is passed
 if [[ "${1:-}" == "--merge-only" ]]; then
     merge_m6anet_outputs
-else
-    log ""
-    log "REMINDER: Once all SLURM inference jobs (Step 7) have finished, run:"
-    log "   bash $(basename "$0") --merge-only"
-    log "This will merge per-sample outputs into: ${MERGED_OUT}"
-    log "Then run the R filtering script: Rscript m6a_filter_and_coords.R"
 fi
