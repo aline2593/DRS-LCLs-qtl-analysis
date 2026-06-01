@@ -117,30 +117,39 @@ echo ""
 # STEP 3: RE-QUANTIFY ALL SAMPLES WITH MERGED ANNOTATION
 ################################################################################
 
+mkdir -p "$OUTPUT_DIR/ballgown"
+mkdir -p "$OUTPUT_DIR/logs"
+
 quant_count=0
+
 for bam in "$BAM_DIR"/*.bam; do
     sample_name=$(basename "$bam" .bam)
 
     # Skip if already quantified
-    if [ -f "$OUTPUT_DIR/${sample_name}_quant.gtf" ]; then
+    if [ -f "$OUTPUT_DIR/ballgown/${sample_name}/${sample_name}_quant.gtf" ]; then
         echo "  Skipping $sample_name (already quantified)"
         continue
     fi
 
     echo "  Quantifying: $sample_name"
 
-    # Quantify using merged annotation
-    # -e: estimation mode (only quantify, no assembly)
-    # -B: output ballgown tables
+    # Create per-sample ballgown directory
+    # Required for -B flag — each sample needs its own directory
+    # otherwise ballgown tables overwrite each other
+    mkdir -p "$OUTPUT_DIR/ballgown/${sample_name}"
+
     stringtie "$bam" \
         -G "$OUTPUT_DIR/merged/merged_transcripts.gtf" \
-        -o "$OUTPUT_DIR/${sample_name}_quant.gtf" \
+        -o "$OUTPUT_DIR/ballgown/${sample_name}/${sample_name}_quant.gtf" \
         -e \
         -B \
+        -L \
         -p "$THREADS" \
         2>> "$OUTPUT_DIR/logs/${sample_name}_quant.log"
 
-    ((quant_count++))
+    quant_count=$((quant_count + 1))   # safe with set -e
+
+    echo "  Done: $sample_name"
 done
 
 echo ""
@@ -151,21 +160,19 @@ echo ""
 # STEP 4: EXTRACT TRANSCRIPT COUNTS AND TPM
 ################################################################################
 
-# Create sample list for prepDE.py
-echo "Creating sample list for prepDE.py..."
+echo "Creating sample list for prepDE..."
 
-ls "$OUTPUT_DIR"/*_quant.gtf | while read file; do
-    sample=$(basename "$file" _quant.gtf)
+# Build sample list pointing to per-sample ballgown subdirectories
+ls "$OUTPUT_DIR"/ballgown/*/*.gtf | while read file; do
+    sample=$(basename "$(dirname "$file")")
     echo -e "${sample}\t${file}"
 done > "$OUTPUT_DIR/sample_list.tsv"
 
-echo "  Sample list created: $OUTPUT_DIR/sample_list.tsv"
+echo "Sample list created: $OUTPUT_DIR/sample_list.tsv"
+echo "Samples found: $(wc -l < $OUTPUT_DIR/sample_list.tsv)"
 
-# Run prepDE.py to extract count matrices
-echo "  Extracting count matrices..."
-
-# Check if prepDE.py exists
-PREPDE_SCRIPT="/path/to/stringtie/prepDE.py3"
+# Check if prepDE.py3 exists
+PREPDE_SCRIPT="/sc/arion/projects/bigbrain/Aline_Analysis_Junctions/FLAIR/Stringtie/Trimm/prepDE.py3"
 
 if [ ! -f "$PREPDE_SCRIPT" ]; then
     echo "Error: prepDE.py3 not found at $PREPDE_SCRIPT"
@@ -173,16 +180,29 @@ if [ ! -f "$PREPDE_SCRIPT" ]; then
     exit 1
 fi
 
+# Compute median read length from first BAM file
+# This is used by prepDE to convert coverage to read counts
+# For long reads this should reflect actual median read length 
+FIRST_BAM=$(ls "$BAM_DIR"/*.bam | head -1)
+echo "Computing median read length from: $(basename $FIRST_BAM)"
+MEDIAN_READ_LENGTH=$(samtools view "$FIRST_BAM" \
+    | awk '{print length($10)}' \
+    | sort -n \
+    | awk 'BEGIN{c=0} {a[c++]=$1} END{print a[int(c/2)]}')
+echo "Median read length: $MEDIAN_READ_LENGTH bp"
+
+# Run prepDE
+echo "Extracting count matrices..."
 python "$PREPDE_SCRIPT" \
     -i "$OUTPUT_DIR/sample_list.tsv" \
     -g "$OUTPUT_DIR/gene_count_matrix.csv" \
     -t "$OUTPUT_DIR/transcript_count_matrix.csv" \
-    -l 75 \
+    -l "$MEDIAN_READ_LENGTH" \
     2>> "$OUTPUT_DIR/logs/prepDE.log"
 
-echo "  Count matrices created:"
-echo "    - $OUTPUT_DIR/gene_count_matrix.csv"
-echo "    - $OUTPUT_DIR/transcript_count_matrix.csv"
+echo "Count matrices created:"
+echo "  Gene:       $OUTPUT_DIR/gene_count_matrix.csv"
+echo "  Transcript: $OUTPUT_DIR/transcript_count_matrix.csv"
 echo ""
 
 ################################################################################
