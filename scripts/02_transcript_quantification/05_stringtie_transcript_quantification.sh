@@ -16,7 +16,8 @@
 #   -c 1.5    : Minimum coverage threshold (TPM)
 #   -t        : Trim predicted transcripts (remove artifacts at ends)
 #   -g 50     : Minimum gap between transcripts (bp)
-#   -L        : Label prefix for novel transcripts (MSTRG)
+#   -l        : Label prefix for novel transcripts (MSTRG)
+#   -L        : long-read mode
 #
 # Dependencies: StringTie, samtools, R (rtracklayer, data.table, ggplot2)
 ################################################################################
