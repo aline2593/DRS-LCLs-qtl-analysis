@@ -332,7 +332,7 @@ log "Then run the R filtering script: Rscript m6a_filter_and_coords.R"
 # STEP 8: Merge Per-Sample m6anet Outputs into a Single Matrix
 # =============================================================================
 # NOTE: This step must only be run AFTER all Step 7 inference jobs have
-#       completed. It collects one data.site_ratio.csv per sample and merges
+#       completed. It collects one data.site_proba.csv per sample and merges
 #       them into a single wide matrix (one row per site, one column per sample)
 #       ready for the downstream R filtering script.
 #
@@ -344,8 +344,8 @@ merge_m6anet_outputs() {
     log "Step 8: Merging per-sample m6anet outputs..."
 
     # Verify at least one inference output exists before proceeding
-    if ! ls "${M6ANET_OUT}"/*/data.site_ratio.csv 1>/dev/null 2>&1; then
-        log "  ERROR: No data.site_ratio.csv files found under ${M6ANET_OUT}/"
+    if ! ls "${M6ANET_OUT}"/*/data.site_proba.csv 1>/dev/null 2>&1; then
+        log "  ERROR: No data.site_proba.csv files found under ${M6ANET_OUT}/"
         log "         Make sure all Step 7 inference jobs have completed."
         exit 1
     fi
@@ -358,10 +358,10 @@ import os
 m6anet_out = "${M6ANET_OUT}"
 merged_out = "${MERGED_OUT}"
 
-files = sorted(glob.glob(os.path.join(m6anet_out, "*", "data.site_ratio.csv")))
+files = sorted(glob.glob(os.path.join(m6anet_out, "*", "data.site_proba.csv")))
 
 if not files:
-    raise FileNotFoundError(f"No data.site_ratio.csv files found under {m6anet_out}/")
+    raise FileNotFoundError(f"No data.site_proba.csv files found under {m6anet_out}/")
 
 print(f"  Found {len(files)} sample(s) to merge:")
 frames = []
